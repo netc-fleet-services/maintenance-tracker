@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { STATUS, STATUS_LABELS } from '../lib/constants.js'
+import CategoryFilter from '../components/CategoryFilter.jsx'
 import { useAuth } from '../App.jsx'
 import Header from '../components/Header.jsx'
 import SearchBar from '../components/SearchBar.jsx'
@@ -19,7 +20,8 @@ export default function Dashboard() {
 
   // Filters
   const [search, setSearch] = useState('')
-  const [locationFilter, setLocationFilter] = useState('all')
+  const [locationFilter, setLocationFilter]   = useState('all')
+  const [categoryFilter, setCategoryFilter]   = useState('all')
   const [maintenanceFilter, setMaintenanceFilter] = useState(false)
 
   // Selected truck state for modals/drawers
@@ -68,6 +70,7 @@ export default function Dashboard() {
   function filterTrucks(truckList) {
     return truckList.filter(t => {
       if (locationFilter !== 'all' && t.location_id !== locationFilter) return false
+      if (categoryFilter !== 'all' && t.category !== categoryFilter) return false
       if (maintenanceFilter && !isPMDue(t)) return false
       if (search) {
         const q = search.toLowerCase()
@@ -102,13 +105,23 @@ export default function Dashboard() {
     setStatusModal(null)
   }
 
-  async function handleAddNote(truck, noteType, body) {
-    const { error } = await supabase.from('truck_notes').insert({
-      truck_id:   truck.id,
-      note_type:  noteType,
-      body,
-      created_by: profile?.email || profile?.id || 'Unknown',
-    })
+  async function handleAddNote(truck, noteType, body, noteId = null) {
+    let error
+    if (noteId) {
+      ({ error } = await supabase.from('truck_notes').update({ body }).eq('id', noteId))
+    } else {
+      ({ error } = await supabase.from('truck_notes').insert({
+        truck_id:   truck.id,
+        note_type:  noteType,
+        body,
+        created_by: profile?.email || profile?.id || 'Unknown',
+      }))
+    }
+    if (error) alert(error.message)
+  }
+
+  async function handleDeleteNote(noteId) {
+    const { error } = await supabase.from('truck_notes').delete().eq('id', noteId)
     if (error) alert(error.message)
   }
 
@@ -155,6 +168,9 @@ export default function Dashboard() {
           onChange={setLocationFilter}
         />
 
+        {/* Category filter */}
+        <CategoryFilter value={categoryFilter} onChange={setCategoryFilter} />
+
         {error && (
           <div style={{
             marginTop: '1rem',
@@ -179,6 +195,7 @@ export default function Dashboard() {
             onStatusChange={(truck, target) => setStatusModal({ truck, targetStatus: target })}
             onViewHistory={truck => setNotesDrawer(truck)}
             onAddNote={handleAddNote}
+            onDeleteNote={handleDeleteNote}
           />
           <StatusTable
             status={STATUS.ISSUES}
@@ -188,6 +205,7 @@ export default function Dashboard() {
             onStatusChange={(truck, target) => setStatusModal({ truck, targetStatus: target })}
             onViewHistory={truck => setNotesDrawer(truck)}
             onAddNote={handleAddNote}
+            onDeleteNote={handleDeleteNote}
           />
           <StatusTable
             status={STATUS.READY}
@@ -197,6 +215,7 @@ export default function Dashboard() {
             onStatusChange={(truck, target) => setStatusModal({ truck, targetStatus: target })}
             onViewHistory={truck => setNotesDrawer(truck)}
             onAddNote={handleAddNote}
+            onDeleteNote={handleDeleteNote}
           />
         </div>
       </main>

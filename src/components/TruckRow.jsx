@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { STATUS, STATUS_LABELS, CAN_CHANGE_STATUS, ROLE, NOTE_TYPE } from '../lib/constants.js'
+import { STATUS, STATUS_LABELS, CAN_CHANGE_STATUS, ROLE, NOTE_TYPE, CATEGORY_LABELS } from '../lib/constants.js'
 import { latestNote } from '../pages/Dashboard.jsx'
 import MaintenanceBadge from './MaintenanceBadge.jsx'
 
@@ -8,8 +8,8 @@ function fmtDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })
 }
 
-// Inline editable note cell — clicking opens a textarea to add a new note entry
-function InlineNoteCell({ truck, noteType, currentNote, canEdit, onAddNote }) {
+// Inline editable note cell — click to edit/create a note, with delete support
+function InlineNoteCell({ truck, noteType, currentNote, canEdit, onAddNote, onDeleteNote }) {
   const [editing, setEditing]   = useState(false)
   const [body, setBody]         = useState('')
   const [saving, setSaving]     = useState(false)
@@ -22,7 +22,7 @@ function InlineNoteCell({ truck, noteType, currentNote, canEdit, onAddNote }) {
   function handleOpen(e) {
     if (!canEdit) return
     e.stopPropagation()
-    setBody('')
+    setBody(currentNote?.body || '')
     setEditing(true)
   }
 
@@ -34,7 +34,16 @@ function InlineNoteCell({ truck, noteType, currentNote, canEdit, onAddNote }) {
   async function handleSave() {
     if (!body.trim()) return
     setSaving(true)
-    await onAddNote(truck, noteType, body.trim())
+    await onAddNote(truck, noteType, body.trim(), currentNote?.id || null)
+    setSaving(false)
+    setEditing(false)
+    setBody('')
+  }
+
+  async function handleDelete() {
+    if (!currentNote?.id) return
+    setSaving(true)
+    await onDeleteNote(currentNote.id)
     setSaving(false)
     setEditing(false)
     setBody('')
@@ -53,7 +62,7 @@ function InlineNoteCell({ truck, noteType, currentNote, canEdit, onAddNote }) {
           value={body}
           onChange={e => setBody(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Add note… (Ctrl+Enter to save)"
+          placeholder="Type a note… (Ctrl+Enter to save)"
           rows={3}
           style={{
             width: '100%',
@@ -104,6 +113,25 @@ function InlineNoteCell({ truck, noteType, currentNote, canEdit, onAddNote }) {
           >
             Cancel
           </button>
+          {currentNote?.id && (
+            <button
+              onClick={handleDelete}
+              disabled={saving}
+              style={{
+                padding: '0.25rem 0.5rem',
+                background: 'transparent',
+                color: 'var(--error)',
+                border: '1px solid var(--error)',
+                borderRadius: '0.3rem',
+                fontSize: '0.72rem',
+                cursor: saving ? 'not-allowed' : 'pointer',
+                opacity: saving ? 0.5 : 1,
+                fontFamily: 'inherit',
+              }}
+            >
+              Delete
+            </button>
+          )}
         </div>
       </td>
     )
@@ -112,7 +140,7 @@ function InlineNoteCell({ truck, noteType, currentNote, canEdit, onAddNote }) {
   return (
     <td
       onClick={canEdit ? handleOpen : undefined}
-      title={canEdit ? (currentNote ? 'Click to add a new note' : 'Click to add note') : undefined}
+      title={canEdit ? 'Click to edit note' : undefined}
       style={{
         cursor: canEdit ? 'text' : 'default',
         position: 'relative',
@@ -125,22 +153,12 @@ function InlineNoteCell({ truck, noteType, currentNote, canEdit, onAddNote }) {
             ? <span style={{ color: 'var(--on-surface-muted)', fontSize: '0.75rem', fontStyle: 'italic' }}>+ add note</span>
             : <span style={{ color: 'var(--on-surface-muted)', fontSize: '0.75rem' }}>—</span>
         }
-        {canEdit && currentNote && (
-          <span style={{
-            fontSize: '0.65rem',
-            color: 'var(--on-surface-muted)',
-            flexShrink: 0,
-            marginTop: '0.1rem',
-          }}>
-            +
-          </span>
-        )}
       </div>
     </td>
   )
 }
 
-export default function TruckRow({ truck, currentStatus, profile, onStatusChange, onViewHistory, onAddNote }) {
+export default function TruckRow({ truck, currentStatus, profile, onStatusChange, onViewHistory, onAddNote, onDeleteNote }) {
   const role            = profile?.role
   const canChangeStatus = CAN_CHANGE_STATUS.includes(role)
 
@@ -172,6 +190,11 @@ export default function TruckRow({ truck, currentStatus, profile, onStatusChange
         </span>
       </td>
 
+      {/* Category */}
+      <td style={{ whiteSpace: 'nowrap', fontSize: '0.8rem', color: 'var(--on-surface-muted)' }}>
+        {CATEGORY_LABELS[truck.category] || '—'}
+      </td>
+
       {/* Location */}
       <td style={{ whiteSpace: 'nowrap', color: 'var(--on-surface-muted)', fontSize: '0.8rem' }}>
         {truck.locations?.name || '—'}
@@ -184,6 +207,7 @@ export default function TruckRow({ truck, currentStatus, profile, onStatusChange
         currentNote={driverNote}
         canEdit={canAddDriverNote}
         onAddNote={onAddNote}
+        onDeleteNote={onDeleteNote}
       />
 
       {/* Mechanic Notes — editable by mechanic / dispatcher / admin */}
@@ -193,6 +217,7 @@ export default function TruckRow({ truck, currentStatus, profile, onStatusChange
         currentNote={mechNote}
         canEdit={canAddMechNote}
         onAddNote={onAddNote}
+        onDeleteNote={onDeleteNote}
       />
 
       {/* Last Work Done — read-only in table; use History drawer to add work notes */}
