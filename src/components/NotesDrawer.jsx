@@ -10,6 +10,35 @@ function fmtDateTime(iso) {
   })
 }
 
+function fmtDate(iso) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' })
+}
+
+// Builds a list of OOS periods from status_history, newest first
+function computeOOSPeriods(statusHistory) {
+  const sorted = [...statusHistory].sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+  const periods = []
+  let oosStart = null
+
+  for (const entry of sorted) {
+    if (entry.new_status === 'oos') {
+      oosStart = entry
+    } else if (entry.old_status === 'oos' && oosStart) {
+      const days = Math.floor((new Date(entry.created_at) - new Date(oosStart.created_at)) / 864e5)
+      periods.push({ startDate: oosStart.created_at, endDate: entry.created_at, days, ongoing: false })
+      oosStart = null
+    }
+  }
+
+  if (oosStart) {
+    const days = Math.floor((Date.now() - new Date(oosStart.created_at)) / 864e5)
+    periods.push({ startDate: oosStart.created_at, endDate: null, days, ongoing: true })
+  }
+
+  return periods.reverse() // newest first
+}
+
 const NOTE_TYPE_COLORS = {
   [NOTE_TYPE.DRIVER]:   { color: '#60a5fa', label: 'Driver' },
   [NOTE_TYPE.MECHANIC]: { color: 'var(--primary)', label: 'Mechanic' },
@@ -105,6 +134,51 @@ export default function NotesDrawer({ truck, profile, onAddNote, onClose }) {
         <div className="drawer-body">
           {activeTab === 'history' && (
             <>
+              {/* OOS Periods summary */}
+              {(() => {
+                const periods = computeOOSPeriods(truck.status_history || [])
+                if (periods.length === 0) return null
+                const totalDays = periods.reduce((sum, p) => sum + p.days, 0)
+                return (
+                  <div style={{ marginBottom: '1.75rem' }}>
+                    <p style={{
+                      fontWeight: 700, fontSize: '0.72rem', textTransform: 'uppercase',
+                      letterSpacing: '0.08em', color: 'var(--on-surface-muted)', marginBottom: '0.75rem', marginTop: 0,
+                    }}>
+                      OOS History — {periods.length} period{periods.length !== 1 ? 's' : ''} · {totalDays} total day{totalDays !== 1 ? 's' : ''}
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      {periods.map((period, i) => (
+                        <div key={i} style={{
+                          padding: '0.625rem 0.875rem',
+                          background: 'var(--status-oos-bg)',
+                          border: '1px solid var(--status-oos-border)',
+                          borderRadius: '0.5rem',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          gap: '0.75rem',
+                        }}>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--on-surface)', lineHeight: 1.4 }}>
+                            <span>{fmtDate(period.startDate)}</span>
+                            <span style={{ color: 'var(--on-surface-muted)', margin: '0 0.3rem' }}>→</span>
+                            <span>{period.ongoing
+                              ? <span style={{ color: 'var(--status-oos)', fontWeight: 600 }}>Ongoing</span>
+                              : fmtDate(period.endDate)
+                            }</span>
+                          </div>
+                          <span style={{
+                            fontWeight: 700, fontSize: '0.875rem', color: 'var(--status-oos)', whiteSpace: 'nowrap', flexShrink: 0,
+                          }}>
+                            {period.days === 0 ? '< 1 day' : `${period.days} day${period.days !== 1 ? 's' : ''}`}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })()}
+
               {/* Add note form */}
               <form onSubmit={handleAddNote} style={{ marginBottom: '1.75rem' }}>
                 <p style={{

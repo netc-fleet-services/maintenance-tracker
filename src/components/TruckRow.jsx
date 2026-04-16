@@ -92,6 +92,15 @@ const STATUS_SELECT_STYLES = {
   },
 }
 
+// Returns how many full days the truck has been in its current OOS streak
+function getOOSDays(truck) {
+  const history = truck.status_history || []
+  const sorted = [...history].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+  const oosEntry = sorted.find(h => h.new_status === 'oos')
+  if (!oosEntry) return 0
+  return Math.floor((Date.now() - new Date(oosEntry.created_at)) / (1000 * 60 * 60 * 24))
+}
+
 export default function TruckRow({ truck, currentStatus, profile, onStatusChange, onViewHistory, onUpdateWaitingOn }) {
   const [changing, setChanging] = useState(false)
   const role            = profile?.role
@@ -160,7 +169,7 @@ export default function TruckRow({ truck, currentStatus, profile, onStatusChange
         <MaintenanceBadge nextPmDate={truck.maintenance?.next_pm_date} />
       </td>
 
-      {/* Status dropdown */}
+      {/* Status dropdown + OOS day counter */}
       <td data-label="Status">
         {canChangeStatus ? (
           <select
@@ -178,6 +187,21 @@ export default function TruckRow({ truck, currentStatus, profile, onStatusChange
             {STATUS_LABELS[currentStatus]}
           </span>
         )}
+        {currentStatus === STATUS.OOS && (() => {
+          const days = getOOSDays(truck)
+          return (
+            <div style={{ marginTop: '0.3rem' }}>
+              <span style={{
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                color: 'var(--status-oos)',
+                letterSpacing: '0.02em',
+              }}>
+                {days === 0 ? '< 1 day OOS' : `${days} day${days !== 1 ? 's' : ''} OOS`}
+              </span>
+            </div>
+          )
+        })()}
       </td>
 
       {/* History */}
