@@ -162,9 +162,18 @@ export default function Dashboard() {
 
   async function handleSyncJobStatus() {
     setSyncingNow(true)
-    await fetchTrucks()
-    await fetchLastSynced()
-    setSyncingNow(false)
+    try {
+      const { error } = await supabase.functions.invoke('trigger-job-sync')
+      if (error) throw error
+      // Give the workflow ~8s to start and write the first update before re-reading
+      await new Promise(r => setTimeout(r, 8000))
+      await fetchTrucks()
+      await fetchLastSynced()
+    } catch (err) {
+      alert('Could not trigger sync: ' + (err?.message || err))
+    } finally {
+      setSyncingNow(false)
+    }
   }
 
   if (loading) {
