@@ -1,0 +1,33 @@
+name: Sync On-Job Status from TowBook
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'   # every 5 minutes
+  workflow_dispatch:          # allow manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4        # kill if TowBook login hangs
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install playwright supabase
+          playwright install chromium --with-deps
+
+      - name: Run sync
+        env:
+          TOWBOOK_USER:        ${{ secrets.TOWBOOK_USER }}
+          TOWBOOK_PASS:        ${{ secrets.TOWBOOK_PASS }}
+          SUPABASE_URL:        ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python scripts/sync_on_job.py
