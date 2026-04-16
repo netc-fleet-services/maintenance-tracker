@@ -142,6 +142,12 @@ def sync_on_job(active_truck_names):
     if off_job_ids:
         sb.from_("trucks").update({"on_job": False}).in_("id", off_job_ids).execute()
 
+    from datetime import datetime, timezone
+    sb.from_("settings").upsert(
+        {"key": "last_synced_on_job", "value": datetime.now(timezone.utc).isoformat()},
+        on_conflict="key"
+    ).execute()
+
     print(f"Set on_job=true for {len(on_job_ids)} trucks, cleared {len(off_job_ids)} trucks")
 
 

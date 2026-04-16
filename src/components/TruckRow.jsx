@@ -145,6 +145,11 @@ export default function TruckRow({ truck, currentStatus, profile, onStatusChange
       {/* Unit */}
       <td data-label="Unit" style={{ fontWeight: 700, color: 'var(--on-surface)', letterSpacing: '0.02em' }}>
         {truck.unit_number}
+        {truck.on_job && (
+          <div style={{ marginTop: '0.25rem' }}>
+            <span className="on-job-badge">On Job</span>
+          </div>
+        )}
       </td>
 
       {/* Category */}
@@ -186,11 +191,6 @@ export default function TruckRow({ truck, currentStatus, profile, onStatusChange
           <span className={`status-badge status-badge-${currentStatus}`}>
             {STATUS_LABELS[currentStatus]}
           </span>
-        )}
-        {truck.on_job && (
-          <div style={{ marginTop: '0.3rem' }}>
-            <span className="on-job-badge">On Job</span>
-          </div>
         )}
         {currentStatus === STATUS.OOS && (() => {
           const days = getOOSDays(truck)
