@@ -14,10 +14,9 @@ const STATUS_ICONS = {
   [STATUS.OOS]:    '✕',
 }
 
-export default function StatusTable({ status, trucks, totalCount, profile, onStatusChange, onViewHistory, onAddNote, onDeleteNote }) {
+export default function StatusTable({ status, trucks, totalCount, profile, onStatusChange, onViewHistory, onUpdateWaitingOn }) {
   const [open, setOpen] = useState(true)
   const colors = STATUS_COLORS[status]
-  const showWaitingOn = status === STATUS.ISSUES || status === STATUS.OOS
 
   return (
     <div style={{
@@ -58,7 +57,6 @@ export default function StatusTable({ status, trucks, totalCount, profile, onSta
           {STATUS_LABELS[status]}
         </span>
 
-        {/* Count badges */}
         <div className="flex items-center gap-2">
           {trucks.length !== totalCount && (
             <span className="section-count" style={{
@@ -99,24 +97,18 @@ export default function StatusTable({ status, trucks, totalCount, profile, onSta
               fontSize: '0.875rem',
             }}>
               No trucks in this section
-              {/* Show a dim message if filters are active */}
             </div>
           ) : (
             <table className="fleet-table">
               <thead>
                 <tr>
                   <th>Unit</th>
-                  <th>VIN</th>
                   <th>Category</th>
                   <th>Location</th>
-                  <th>Driver Notes</th>
-                  <th>Mechanic Notes</th>
-                  <th>Last Work Done</th>
-                  <th>Last Status Change</th>
-                  <th>Changed By</th>
-                  {showWaitingOn && <th>Waiting On</th>}
+                  <th>Waiting On</th>
                   <th>Next PM</th>
-                  <th>Actions</th>
+                  <th>Status</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -128,8 +120,7 @@ export default function StatusTable({ status, trucks, totalCount, profile, onSta
                     profile={profile}
                     onStatusChange={onStatusChange}
                     onViewHistory={onViewHistory}
-                    onAddNote={onAddNote}
-                    onDeleteNote={onDeleteNote}
+                    onUpdateWaitingOn={onUpdateWaitingOn}
                   />
                 ))}
               </tbody>

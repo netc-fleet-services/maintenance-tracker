@@ -7,7 +7,6 @@ import Header from '../components/Header.jsx'
 import SearchBar from '../components/SearchBar.jsx'
 import LocationFilter from '../components/LocationFilter.jsx'
 import StatusTable from '../components/StatusTable.jsx'
-import StatusChangeModal from '../components/StatusChangeModal.jsx'
 import NotesDrawer from '../components/NotesDrawer.jsx'
 
 export default function Dashboard() {
@@ -24,8 +23,6 @@ export default function Dashboard() {
   const [categoryFilter, setCategoryFilter]   = useState('all')
   const [maintenanceFilter, setMaintenanceFilter] = useState(false)
 
-  // Selected truck state for modals/drawers
-  const [statusModal, setStatusModal] = useState(null)   // { truck, targetStatus? }
   const [notesDrawer, setNotesDrawer] = useState(null)   // truck
 
   const fetchTrucks = useCallback(async () => {
@@ -93,16 +90,23 @@ export default function Dashboard() {
   const issuesTrucks = filterTrucks(trucks.filter(t => t.current_status === STATUS.ISSUES))
   const oosTrucks    = filterTrucks(trucks.filter(t => t.current_status === STATUS.OOS))
 
-  async function handleStatusChange(truck, newStatus, note, waitingOn) {
+  async function handleStatusChange(truck, newStatus, comment, waitingOn) {
     const { error } = await supabase.rpc('change_truck_status', {
       p_truck_id:   truck.id,
       p_new_status: newStatus,
-      p_comment:    note || null,
-      p_waiting_on: waitingOn || null,
+      p_comment:    comment || null,
+      p_waiting_on: waitingOn !== undefined ? waitingOn : null,
       p_changed_by: profile?.email || profile?.id || 'Unknown',
     })
     if (error) alert(error.message)
-    setStatusModal(null)
+  }
+
+  async function handleUpdateWaitingOn(truckId, waitingOn) {
+    const { error } = await supabase
+      .from('trucks')
+      .update({ waiting_on: waitingOn || null })
+      .eq('id', truckId)
+    if (error) alert(error.message)
   }
 
   async function handleAddNote(truck, noteType, body, noteId = null) {
@@ -192,44 +196,30 @@ export default function Dashboard() {
             trucks={oosTrucks}
             totalCount={trucks.filter(t => t.current_status === STATUS.OOS).length}
             profile={profile}
-            onStatusChange={(truck, target) => setStatusModal({ truck, targetStatus: target })}
+            onStatusChange={handleStatusChange}
             onViewHistory={truck => setNotesDrawer(truck)}
-            onAddNote={handleAddNote}
-            onDeleteNote={handleDeleteNote}
+            onUpdateWaitingOn={handleUpdateWaitingOn}
           />
           <StatusTable
             status={STATUS.ISSUES}
             trucks={issuesTrucks}
             totalCount={trucks.filter(t => t.current_status === STATUS.ISSUES).length}
             profile={profile}
-            onStatusChange={(truck, target) => setStatusModal({ truck, targetStatus: target })}
+            onStatusChange={handleStatusChange}
             onViewHistory={truck => setNotesDrawer(truck)}
-            onAddNote={handleAddNote}
-            onDeleteNote={handleDeleteNote}
+            onUpdateWaitingOn={handleUpdateWaitingOn}
           />
           <StatusTable
             status={STATUS.READY}
             trucks={readyTrucks}
             totalCount={trucks.filter(t => t.current_status === STATUS.READY).length}
             profile={profile}
-            onStatusChange={(truck, target) => setStatusModal({ truck, targetStatus: target })}
+            onStatusChange={handleStatusChange}
             onViewHistory={truck => setNotesDrawer(truck)}
-            onAddNote={handleAddNote}
-            onDeleteNote={handleDeleteNote}
+            onUpdateWaitingOn={handleUpdateWaitingOn}
           />
         </div>
       </main>
-
-      {/* Status Change Modal */}
-      {statusModal && (
-        <StatusChangeModal
-          truck={statusModal.truck}
-          targetStatus={statusModal.targetStatus}
-          profile={profile}
-          onConfirm={handleStatusChange}
-          onClose={() => setStatusModal(null)}
-        />
-      )}
 
       {/* Notes / History Drawer */}
       {notesDrawer && (

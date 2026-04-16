@@ -27,7 +27,6 @@ export const CATEGORY = {
   LD_TOW:    'ld_tow',
   ROADSIDE:  'roadside',
   TRANSPORT: 'transport',
-  TRAILER:   'trailer',
 }
 
 export const CATEGORY_LABELS = {
@@ -35,7 +34,6 @@ export const CATEGORY_LABELS = {
   ld_tow:    'LD Tow',
   roadside:  'Roadside',
   transport: 'Transport',
-  trailer:   'Trailer',
 }
 
 export const ROLE = {
@@ -52,4 +50,4 @@ export const CAN_MANAGE_TRUCKS = [ROLE.ADMIN]
 export const CAN_MANAGE_NOTIFICATIONS = [ROLE.ADMIN]
 
 // PM status thresholds (days before next_pm_date)
-export const PM_SOON_DAYS = 30  // yellow if PM due within 30 days
+export const PM_SOON_DAYS = 60  // yellow if PM due within 60 days
