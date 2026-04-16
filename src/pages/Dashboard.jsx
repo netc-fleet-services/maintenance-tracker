@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { STATUS, STATUS_LABELS } from '../lib/constants.js'
 import CategoryFilter from '../components/CategoryFilter.jsx'
@@ -24,6 +24,19 @@ export default function Dashboard() {
   const [maintenanceFilter, setMaintenanceFilter] = useState(false)
 
   const [notesDrawer, setNotesDrawer] = useState(null)   // truck
+  const [lastSynced, setLastSynced] = useState(null)     // ISO string from settings table
+  const [syncingNow, setSyncingNow] = useState(false)
+  const [, setTick] = useState(0)
+  const tickRef = useRef(null)
+
+  const fetchLastSynced = useCallback(async () => {
+    const { data } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('key', 'last_synced_on_job')
+      .single()
+    if (data?.value) setLastSynced(data.value)
+  }, [])
 
   const fetchTrucks = useCallback(async () => {
     const { data, error } = await supabase
@@ -46,6 +59,10 @@ export default function Dashboard() {
   useEffect(() => {
     fetchTrucks()
     fetchLocations()
+    fetchLastSynced()
+
+    // Re-tick every 30s so "X min ago" label stays current
+    tickRef.current = setInterval(() => setTick(n => n + 1), 30_000)
 
     // Realtime subscription — re-fetch on any truck change
     const channel = supabase
@@ -55,8 +72,11 @@ export default function Dashboard() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'status_history' }, fetchTrucks)
       .subscribe()
 
-    return () => supabase.removeChannel(channel)
-  }, [fetchTrucks])
+    return () => {
+      clearInterval(tickRef.current)
+      supabase.removeChannel(channel)
+    }
+  }, [fetchTrucks, fetchLastSynced])
 
   async function fetchLocations() {
     const { data } = await supabase.from('locations').select('*').order('name')
@@ -131,6 +151,22 @@ export default function Dashboard() {
     if (error) alert(error.message)
   }
 
+  function timeAgo(iso) {
+    if (!iso) return null
+    const mins = Math.floor((Date.now() - new Date(iso)) / 60_000)
+    if (mins < 1)  return 'Just now'
+    if (mins < 60) return `${mins} min ago`
+    const hrs = Math.floor(mins / 60)
+    return `${hrs} hr${hrs !== 1 ? 's' : ''} ago`
+  }
+
+  async function handleSyncJobStatus() {
+    setSyncingNow(true)
+    await fetchTrucks()
+    await fetchLastSynced()
+    setSyncingNow(false)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--surface)' }}>
@@ -164,6 +200,21 @@ export default function Dashboard() {
             >
               PM Due
             </button>
+            <div className="flex items-center gap-2">
+              <button
+                className="btn-secondary"
+                style={{ fontSize: '0.8rem', padding: '0.4rem 0.875rem', opacity: syncingNow ? 0.6 : 1 }}
+                onClick={handleSyncJobStatus}
+                disabled={syncingNow}
+              >
+                {syncingNow ? 'Refreshing…' : '↻ Job Status'}
+              </button>
+              {lastSynced && (
+                <span style={{ fontSize: '0.7rem', color: 'var(--on-surface-muted)', whiteSpace: 'nowrap' }}>
+                  {timeAgo(lastSynced)}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
