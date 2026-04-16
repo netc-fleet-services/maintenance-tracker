@@ -14,7 +14,7 @@ const STATUS_ICONS = {
   [STATUS.OOS]:    '✕',
 }
 
-export default function StatusTable({ status, trucks, totalCount, profile, onStatusChange, onViewHistory, onAddNote }) {
+export default function StatusTable({ status, trucks, totalCount, profile, onStatusChange, onViewHistory, onAddNote, onDeleteNote }) {
   const [open, setOpen] = useState(true)
   const colors = STATUS_COLORS[status]
   const showWaitingOn = status === STATUS.ISSUES || status === STATUS.OOS
@@ -107,6 +107,7 @@ export default function StatusTable({ status, trucks, totalCount, profile, onSta
                 <tr>
                   <th>Unit</th>
                   <th>VIN</th>
+                  <th>Category</th>
                   <th>Location</th>
                   <th>Driver Notes</th>
                   <th>Mechanic Notes</th>
@@ -128,6 +129,7 @@ export default function StatusTable({ status, trucks, totalCount, profile, onSta
                     onStatusChange={onStatusChange}
                     onViewHistory={onViewHistory}
                     onAddNote={onAddNote}
+                    onDeleteNote={onDeleteNote}
                   />
                 ))}
               </tbody>
