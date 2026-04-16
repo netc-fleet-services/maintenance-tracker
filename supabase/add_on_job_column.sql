@@ -1,0 +1,1 @@
+ALTER TABLE trucks ADD COLUMN IF NOT EXISTS on_job boolean NOT NULL DEFAULT false;

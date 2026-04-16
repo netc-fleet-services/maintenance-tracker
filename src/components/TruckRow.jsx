@@ -169,7 +169,7 @@ export default function TruckRow({ truck, currentStatus, profile, onStatusChange
         <MaintenanceBadge nextPmDate={truck.maintenance?.next_pm_date} />
       </td>
 
-      {/* Status dropdown + OOS day counter */}
+      {/* Status dropdown + OOS day counter + On-Job badge */}
       <td data-label="Status">
         {canChangeStatus ? (
           <select
@@ -186,6 +186,11 @@ export default function TruckRow({ truck, currentStatus, profile, onStatusChange
           <span className={`status-badge status-badge-${currentStatus}`}>
             {STATUS_LABELS[currentStatus]}
           </span>
+        )}
+        {truck.on_job && (
+          <div style={{ marginTop: '0.3rem' }}>
+            <span className="on-job-badge">On Job</span>
+          </div>
         )}
         {currentStatus === STATUS.OOS && (() => {
           const days = getOOSDays(truck)
