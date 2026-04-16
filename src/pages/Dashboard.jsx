@@ -172,9 +172,9 @@ export default function Dashboard() {
         {/* Status sections */}
         <div className="flex flex-col gap-4 mt-5">
           <StatusTable
-            status={STATUS.READY}
-            trucks={readyTrucks}
-            totalCount={trucks.filter(t => t.current_status === STATUS.READY).length}
+            status={STATUS.OOS}
+            trucks={oosTrucks}
+            totalCount={trucks.filter(t => t.current_status === STATUS.OOS).length}
             profile={profile}
             onStatusChange={(truck, target) => setStatusModal({ truck, targetStatus: target })}
             onViewHistory={truck => setNotesDrawer(truck)}
@@ -190,9 +190,9 @@ export default function Dashboard() {
             onAddNote={handleAddNote}
           />
           <StatusTable
-            status={STATUS.OOS}
-            trucks={oosTrucks}
-            totalCount={trucks.filter(t => t.current_status === STATUS.OOS).length}
+            status={STATUS.READY}
+            trucks={readyTrucks}
+            totalCount={trucks.filter(t => t.current_status === STATUS.READY).length}
             profile={profile}
             onStatusChange={(truck, target) => setStatusModal({ truck, targetStatus: target })}
             onViewHistory={truck => setNotesDrawer(truck)}

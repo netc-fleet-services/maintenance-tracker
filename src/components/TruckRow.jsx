@@ -122,13 +122,13 @@ function InlineNoteCell({ truck, noteType, currentNote, canEdit, onAddNote }) {
         {currentNote
           ? <span className="note-pill" title={currentNote.body}>{currentNote.body}</span>
           : canEdit
-            ? <span style={{ color: 'var(--outline)', fontSize: '0.75rem', fontStyle: 'italic' }}>+ add note</span>
+            ? <span style={{ color: 'var(--on-surface-muted)', fontSize: '0.75rem', fontStyle: 'italic' }}>+ add note</span>
             : <span style={{ color: 'var(--on-surface-muted)', fontSize: '0.75rem' }}>—</span>
         }
         {canEdit && currentNote && (
           <span style={{
             fontSize: '0.65rem',
-            color: 'var(--outline)',
+            color: 'var(--on-surface-muted)',
             flexShrink: 0,
             marginTop: '0.1rem',
           }}>

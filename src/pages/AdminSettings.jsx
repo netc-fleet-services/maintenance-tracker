@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
-import { STATUS, STATUS_LABELS } from '../lib/constants.js'
+import { STATUS, STATUS_LABELS, CATEGORY_LABELS } from '../lib/constants.js'
 import Header from '../components/Header.jsx'
 
-const EMPTY_TRUCK = { unit_number: '', vin: '', location_id: '', current_status: STATUS.READY, active: true }
+const EMPTY_TRUCK = { unit_number: '', vin: '', category: '', location_id: '', current_status: STATUS.READY, active: true }
 
 export default function AdminSettings() {
   const navigate = useNavigate()
@@ -46,11 +46,12 @@ export default function AdminSettings() {
   function openEditTruck(truck) {
     setEditTruck(truck)
     setTruckForm({
-      unit_number:     truck.unit_number,
-      vin:             truck.vin,
-      location_id:     truck.location_id,
-      current_status:  truck.current_status,
-      active:          truck.active,
+      unit_number:    truck.unit_number,
+      vin:            truck.vin || '',
+      category:       truck.category || '',
+      location_id:    truck.location_id,
+      current_status: truck.current_status,
+      active:         truck.active,
     })
     setShowTruckForm(true)
   }
@@ -62,7 +63,8 @@ export default function AdminSettings() {
 
     const payload = {
       unit_number:    truckForm.unit_number.trim(),
-      vin:            truckForm.vin.trim(),
+      vin:            truckForm.vin.trim() || null,
+      category:       truckForm.category || null,
       location_id:    truckForm.location_id || null,
       current_status: truckForm.current_status,
       active:         truckForm.active,
@@ -202,15 +204,27 @@ export default function AdminSettings() {
                       />
                     </div>
                     <div>
-                      <label className="form-label">VIN *</label>
+                      <label className="form-label">VIN <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: 'var(--on-surface-muted)' }}>(optional)</span></label>
                       <input
                         className="form-input"
                         value={truckForm.vin}
                         onChange={e => setTruckForm(f => ({ ...f, vin: e.target.value }))}
-                        required
                         placeholder="17-character VIN"
                         maxLength={17}
                       />
+                    </div>
+                    <div>
+                      <label className="form-label">Category</label>
+                      <select
+                        className="form-select"
+                        value={truckForm.category}
+                        onChange={e => setTruckForm(f => ({ ...f, category: e.target.value }))}
+                      >
+                        <option value="">-- No Category --</option>
+                        {Object.entries(CATEGORY_LABELS).map(([val, label]) => (
+                          <option key={val} value={val}>{label}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label className="form-label">Location</label>

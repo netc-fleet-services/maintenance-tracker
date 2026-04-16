@@ -47,7 +47,8 @@ CREATE TRIGGER on_auth_user_created
 CREATE TABLE trucks (
   id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   unit_number    text UNIQUE NOT NULL,
-  vin            text UNIQUE NOT NULL,
+  vin            text UNIQUE,               -- nullable; fill in from VIN data source later
+  category       text CHECK (category IN ('hd_tow', 'ld_tow', 'roadside', 'transport', 'trailer')),
   location_id    uuid REFERENCES locations(id),
   current_status text NOT NULL DEFAULT 'ready'
                    CHECK (current_status IN ('ready', 'issues', 'oos')),
