@@ -22,6 +22,22 @@ export const NOTE_TYPE_LABELS = {
   [NOTE_TYPE.WORK]:     'Work Done',
 }
 
+export const CATEGORY = {
+  HD_TOW:    'hd_tow',
+  LD_TOW:    'ld_tow',
+  ROADSIDE:  'roadside',
+  TRANSPORT: 'transport',
+  TRAILER:   'trailer',
+}
+
+export const CATEGORY_LABELS = {
+  hd_tow:    'HD Tow',
+  ld_tow:    'LD Tow',
+  roadside:  'Roadside',
+  transport: 'Transport',
+  trailer:   'Trailer',
+}
+
 export const ROLE = {
   ADMIN:      'admin',
   DISPATCHER: 'dispatcher',

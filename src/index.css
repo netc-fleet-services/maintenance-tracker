@@ -8,8 +8,8 @@ html.theme-dark {
   --surface:             #0a0a0a;
   --surface-container:   #111111;
   --surface-high:        #1c1c1c;
-  --on-surface:          #f0ece4;
-  --on-surface-muted:    #8a7e6e;
+  --on-surface:          #f5f5f5;
+  --on-surface-muted:    #a89e8e;
   --outline:             #2e2820;
   --outline-variant:     #1e1b17;
   --primary:             #D4943A;
