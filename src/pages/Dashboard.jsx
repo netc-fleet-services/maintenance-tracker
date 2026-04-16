@@ -99,6 +99,7 @@ export default function Dashboard() {
       p_changed_by: profile?.email || profile?.id || 'Unknown',
     })
     if (error) alert(error.message)
+    else fetchTrucks()
   }
 
   async function handleUpdateWaitingOn(truckId, waitingOn) {
@@ -107,6 +108,7 @@ export default function Dashboard() {
       .update({ waiting_on: waitingOn || null })
       .eq('id', truckId)
     if (error) alert(error.message)
+    else fetchTrucks()
   }
 
   async function handleAddNote(truck, noteType, body, noteId = null) {
