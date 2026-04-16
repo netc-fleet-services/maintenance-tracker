@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { supabase } from '../lib/supabase.js'
+import { supabase, ANON_KEY } from '../lib/supabase.js'
 import { STATUS, STATUS_LABELS } from '../lib/constants.js'
 import CategoryFilter from '../components/CategoryFilter.jsx'
 import { useAuth } from '../App.jsx'
@@ -163,7 +163,9 @@ export default function Dashboard() {
   async function handleSyncJobStatus() {
     setSyncingNow(true)
     try {
-      const { error } = await supabase.functions.invoke('trigger-job-sync')
+      const { error } = await supabase.functions.invoke('trigger-job-sync', {
+        headers: { Authorization: `Bearer ${ANON_KEY}` },
+      })
       if (error) throw error
       // Give the workflow ~8s to start and write the first update before re-reading
       await new Promise(r => setTimeout(r, 8000))
