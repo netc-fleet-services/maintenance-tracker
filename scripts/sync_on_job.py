@@ -62,8 +62,10 @@ def extract_truck_names(page, tab_name, tab_id):
                          eq_el.first.text_content() or '').strip()
 
         truck = re.sub(r'\s+', ' ', truck).strip()
-        if truck:
-            names.add(truck)
+        for part in truck.split(','):
+            name = part.strip()
+            if name:
+                names.add(name)
 
     return names
 
