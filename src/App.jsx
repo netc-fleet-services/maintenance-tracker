@@ -6,6 +6,12 @@ import Dashboard from './pages/Dashboard.jsx'
 import AdminSettings from './pages/AdminSettings.jsx'
 import ResetPassword from './pages/ResetPassword.jsx'
 
+// Detect auth tokens in the URL hash on initial page load (before HashRouter strips them).
+// Supabase puts #access_token=...&type=recovery|invite in the URL after email link clicks.
+const initialHash = new URLSearchParams(window.location.hash.replace(/^#\/?/, ''))
+const isAuthCallback = initialHash.has('access_token')
+const initialAuthType = initialHash.get('type') // 'recovery', 'invite', 'signup', etc.
+
 // Auth context shared across the app
 export const AuthContext = createContext(null)
 export const useAuth = () => useContext(AuthContext)
@@ -47,6 +53,23 @@ function RequireAdmin({ children }) {
   return children
 }
 
+// Shown while Supabase processes auth tokens from the URL hash.
+// Returns null to prevent the catch-all from redirecting away before tokens are read.
+function AuthCallbackHandler() {
+  return (
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--surface)' }}>
+      <div style={{
+        width: 36, height: 36,
+        border: '3px solid var(--outline)',
+        borderTopColor: 'var(--primary)',
+        borderRadius: '50%',
+        animation: 'spin 0.8s linear infinite',
+      }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  )
+}
+
 export default function App() {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
@@ -54,19 +77,28 @@ export default function App() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       if (session) fetchProfile(session.user.id)
       else setLoading(false)
     })
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Password reset email link
       if (event === 'PASSWORD_RECOVERY') {
+        setSession(session)
         navigate('/reset-password')
         return
       }
+
+      // Invite / signup email link — user is signed in but needs to set a password
+      if (event === 'SIGNED_IN' && isAuthCallback &&
+          (initialAuthType === 'invite' || initialAuthType === 'signup')) {
+        setSession(session)
+        navigate('/reset-password')
+        return
+      }
+
       setSession(session)
       if (session) fetchProfile(session.user.id)
       else { setProfile(null); setLoading(false) }
@@ -92,7 +124,9 @@ export default function App() {
         <Route path="/" element={<RequireAuth><Dashboard /></RequireAuth>} />
         <Route path="/admin" element={<RequireAuth><RequireAdmin><AdminSettings /></RequireAdmin></RequireAuth>} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* If the URL has auth tokens, hold here while onAuthStateChange navigates.
+            Otherwise redirect unknown routes to home. */}
+        <Route path="*" element={isAuthCallback ? <AuthCallbackHandler /> : <Navigate to="/" replace />} />
       </Routes>
     </AuthContext.Provider>
   )
