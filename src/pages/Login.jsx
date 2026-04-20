@@ -6,6 +6,8 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [resetSent, setResetSent] = useState(false)
+  const [resetLoading, setResetLoading] = useState(false)
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -18,6 +20,18 @@ export default function Login() {
       setLoading(false)
     }
     // On success, App.jsx's onAuthStateChange fires and redirects automatically
+  }
+
+  async function handleForgotPassword() {
+    if (!email) { setError('Enter your email address above first.'); return }
+    setResetLoading(true)
+    setError('')
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + window.location.pathname,
+    })
+    setResetLoading(false)
+    if (error) { setError(error.message); return }
+    setResetSent(true)
   }
 
   return (
@@ -122,6 +136,26 @@ export default function Login() {
           >
             {loading ? 'Signing in…' : 'Sign In'}
           </button>
+
+          {resetSent ? (
+            <p style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--status-ready)', margin: 0 }}>
+              Reset link sent — check your email.
+            </p>
+          ) : (
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              disabled={resetLoading}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: 'var(--on-surface-muted)', fontSize: '0.8rem',
+                textAlign: 'center', padding: 0, fontFamily: 'inherit',
+                textDecoration: 'underline',
+              }}
+            >
+              {resetLoading ? 'Sending…' : 'Forgot password?'}
+            </button>
+          )}
         </form>
       </div>
 

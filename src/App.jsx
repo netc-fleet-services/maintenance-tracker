@@ -1,9 +1,10 @@
 import { useState, useEffect, createContext, useContext } from 'react'
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { supabase } from './lib/supabase.js'
 import Login from './pages/Login.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import AdminSettings from './pages/AdminSettings.jsx'
+import ResetPassword from './pages/ResetPassword.jsx'
 
 // Auth context shared across the app
 export const AuthContext = createContext(null)
@@ -50,6 +51,7 @@ export default function App() {
   const [session, setSession] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
 
   useEffect(() => {
     // Get initial session
@@ -60,14 +62,18 @@ export default function App() {
     })
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        navigate('/reset-password')
+        return
+      }
       setSession(session)
       if (session) fetchProfile(session.user.id)
       else { setProfile(null); setLoading(false) }
     })
 
     return () => subscription.unsubscribe()
-  }, [])
+  }, [navigate])
 
   async function fetchProfile(userId) {
     const { data } = await supabase
@@ -85,6 +91,7 @@ export default function App() {
         <Route path="/login" element={session && !loading ? <Navigate to="/" replace /> : <Login />} />
         <Route path="/" element={<RequireAuth><Dashboard /></RequireAuth>} />
         <Route path="/admin" element={<RequireAuth><RequireAdmin><AdminSettings /></RequireAdmin></RequireAuth>} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </AuthContext.Provider>

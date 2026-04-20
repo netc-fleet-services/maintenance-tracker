@@ -107,6 +107,9 @@ export default function Header() {
               </span>
             </div>
           )}
+          <button className="btn-ghost" style={{ fontSize: '0.8rem' }} onClick={() => navigate('/reset-password')}>
+            Change Password
+          </button>
           <button className="btn-secondary" style={{ fontSize: '0.8rem' }} onClick={handleSignOut}>
             Sign Out
           </button>
