@@ -37,16 +37,17 @@ export const CATEGORY_LABELS = {
 }
 
 export const ROLE = {
-  ADMIN:      'admin',
-  DISPATCHER: 'dispatcher',
-  MECHANIC:   'mechanic',
-  DRIVER:     'driver',
+  ADMIN:         'admin',
+  SHOP_MANAGER:  'shop_manager',
+  DISPATCHER:    'dispatcher',
+  MECHANIC:      'mechanic',
+  DRIVER:        'driver',
 }
 
 // Which roles can perform which actions
-export const CAN_CHANGE_STATUS = [ROLE.ADMIN, ROLE.DISPATCHER, ROLE.MECHANIC]
-export const CAN_ADD_MECHANIC_NOTE = [ROLE.ADMIN, ROLE.DISPATCHER, ROLE.MECHANIC]
-export const CAN_MANAGE_TRUCKS = [ROLE.ADMIN]
+export const CAN_CHANGE_STATUS        = [ROLE.ADMIN, ROLE.SHOP_MANAGER, ROLE.DISPATCHER, ROLE.MECHANIC]
+export const CAN_ADD_MECHANIC_NOTE    = [ROLE.ADMIN, ROLE.SHOP_MANAGER, ROLE.DISPATCHER, ROLE.MECHANIC]
+export const CAN_MANAGE_TRUCKS        = [ROLE.ADMIN, ROLE.SHOP_MANAGER]
 export const CAN_MANAGE_NOTIFICATIONS = [ROLE.ADMIN]
 
 // PM status thresholds (days before next_pm_date)

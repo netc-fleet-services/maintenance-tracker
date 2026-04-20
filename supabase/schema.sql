@@ -23,7 +23,7 @@ CREATE TABLE profiles (
   id    uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email text UNIQUE NOT NULL,
   role  text NOT NULL DEFAULT 'driver'
-          CHECK (role IN ('admin', 'dispatcher', 'mechanic', 'driver'))
+          CHECK (role IN ('admin', 'shop_manager', 'dispatcher', 'mechanic', 'driver'))
 );
 
 -- Auto-create a profile row whenever a new user signs up
@@ -178,9 +178,9 @@ CREATE POLICY "profiles_read"    ON profiles FOR SELECT USING (auth.role() = 'au
 CREATE POLICY "profiles_own"     ON profiles FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "profiles_admin"   ON profiles FOR ALL    USING (my_role() = 'admin');
 
--- TRUCKS — authenticated users can read; admin can insert/delete; dispatchers+mechanics can update status
-CREATE POLICY "trucks_read"      ON trucks FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "trucks_admin"     ON trucks FOR ALL    USING (my_role() = 'admin');
+-- TRUCKS — authenticated users can read; admin+shop_manager can insert/delete/update all fields; dispatchers+mechanics can update status
+CREATE POLICY "trucks_read"       ON trucks FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "trucks_admin"      ON trucks FOR ALL    USING (my_role() IN ('admin', 'shop_manager'));
 CREATE POLICY "trucks_update_ops" ON trucks FOR UPDATE USING (my_role() IN ('dispatcher', 'mechanic'));
 
 -- TRUCK NOTES — all authenticated can read; drivers insert driver notes; mechanics+ insert any

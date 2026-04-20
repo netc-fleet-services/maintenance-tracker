@@ -29,7 +29,7 @@ export default function Header() {
     navigate('/login')
   }
 
-  const isAdmin = profile?.role === 'admin'
+  const isAdmin = ['admin', 'shop_manager'].includes(profile?.role)
 
   return (
     <header style={{

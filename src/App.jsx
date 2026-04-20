@@ -47,7 +47,7 @@ function RequireAuth({ children }) {
 
 function RequireAdmin({ children }) {
   const { profile } = useAuth()
-  if (profile?.role !== 'admin') {
+  if (!['admin', 'shop_manager'].includes(profile?.role)) {
     return <Navigate to="/" replace />
   }
   return children

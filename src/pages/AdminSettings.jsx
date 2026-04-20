@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
-import { STATUS, STATUS_LABELS, CATEGORY_LABELS } from '../lib/constants.js'
+import { STATUS, STATUS_LABELS, CATEGORY_LABELS, CAN_MANAGE_NOTIFICATIONS } from '../lib/constants.js'
+import { useAuth } from '../App.jsx'
 import Header from '../components/Header.jsx'
 
 const EMPTY_TRUCK = { unit_number: '', vin: '', category: '', location_id: '', current_status: STATUS.READY, active: true }
 
 export default function AdminSettings() {
   const navigate = useNavigate()
+  const { profile } = useAuth()
+  const canManageNotifications = CAN_MANAGE_NOTIFICATIONS.includes(profile?.role)
   const [tab, setTab] = useState('trucks')
 
   const [trucks, setTrucks]           = useState([])
@@ -141,7 +144,7 @@ export default function AdminSettings() {
 
         {/* Tabs */}
         <div className="flex gap-2 mb-6" style={{ borderBottom: '1px solid var(--outline)', paddingBottom: '0.75rem' }}>
-          {[['trucks', 'Manage Trucks'], ['notifications', 'Notifications']].map(([id, label]) => (
+          {[['trucks', 'Manage Trucks'], ...(canManageNotifications ? [['notifications', 'Notifications']] : [])].map(([id, label]) => (
             <button
               key={id}
               className={tab === id ? 'btn-primary' : 'btn-secondary'}
