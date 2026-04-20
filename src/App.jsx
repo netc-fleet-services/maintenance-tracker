@@ -91,9 +91,9 @@ export default function App() {
         return
       }
 
-      // Invite / signup email link — user is signed in but needs to set a password
-      if (event === 'SIGNED_IN' && isAuthCallback &&
-          (initialAuthType === 'invite' || initialAuthType === 'signup')) {
+      // Invite / signup email link — user is signed in but needs to set a password.
+      // Any SIGNED_IN during an auth callback means the user came via an email link.
+      if (event === 'SIGNED_IN' && isAuthCallback) {
         setSession(session)
         navigate('/reset-password')
         return
